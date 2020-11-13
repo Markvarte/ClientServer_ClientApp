@@ -2,7 +2,8 @@
 using System.IO;
 using System.IO.Pipes;
 using System.Threading;
-
+using System.IO.MemoryMappedFiles;
+public enum ClientProgramType { FIFO, queue, mappedMemory }
 
 namespace ClientServer_ClientApp
 {
@@ -45,14 +46,54 @@ namespace ClientServer_ClientApp
         static void Main(string[] args)
         {
 
+            ClientProgramType c = ClientProgramType.mappedMemory; //  for now
+            switch (c)
+            {
+                case ClientProgramType.FIFO: // 0
+                    ClientProgram Client = new ClientProgram();
 
-            ClientProgram Client = new ClientProgram();
+
+                    Thread ClientThread = new Thread(Client.ThreadStartClient);
 
 
-            Thread ClientThread = new Thread(Client.ThreadStartClient);
+                    ClientThread.Start();
+                    break;
 
 
-            ClientThread.Start();
+                case ClientProgramType.queue: // 1
+
+
+                    break;
+
+                case ClientProgramType.mappedMemory: // 2
+                    //Atver un nolasa no servera rakstīto failu
+
+                    Console.WriteLine("Memory mapped failu lasītājs");
+
+                    using (var file = MemoryMappedFile.OpenExisting("myFile"))
+                    {
+                        using (var reader = file.CreateViewAccessor(0, 34))
+                        {
+                            var bytes = new byte[34];
+                            reader.ReadArray<byte>(0, bytes, 0, bytes.Length);
+
+                            Console.WriteLine("Lasa baitus");
+                            for (var i = 0; i < bytes.Length; i++)
+                                Console.Write((char)bytes[i] + " ");
+
+                            Console.WriteLine(string.Empty);
+                        }
+                    }
+                    Console.WriteLine("Nospiediet jebkuru taustiņu, lai izietu ...");
+                    Console.ReadLine();
+
+                    break;
+
+                default:
+                    Console.WriteLine("Wrong client type.");
+                    break;
+            }
+                  
         }
 
     }
